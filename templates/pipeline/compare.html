@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Model Comparison</title>
+<link rel="stylesheet" href="/static/style.css">
+<style>
+  html, body { margin: 0; background: #f5f7fa; }
+  header { background: #1e1b4b; color: #fff; padding: 20px 24px; }
+  header h1 { margin: 0; font-size: 1.4rem; }
+  header .sub { color: #c7d2fe; font-size: .88rem; margin-top: 4px; }
+  main { max-width: 1100px; margin: 36px auto; padding: 0 16px; }
+
+  /* Model summary cards */
+  .model-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 32px; }
+  .model-card { background: #fff; border-radius: 10px; box-shadow: 0 1px 10px rgba(0,0,0,.07); padding: 18px 20px; }
+  .model-card h3 { margin: 0 0 10px; font-size: .95rem; color: #1e1b4b; }
+  .badge { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: .8rem; font-weight: 600; margin-bottom: 8px; }
+  .badge.easy { background: #d1fae5; color: #065f46; }
+  .badge.hard { background: #fee2e2; color: #991b1b; }
+  .conf-bar-bg { background: #e5e7eb; border-radius: 4px; height: 7px; overflow: hidden; margin: 6px 0 2px; }
+  .conf-bar-fill { height: 7px; border-radius: 4px; }
+  .conf-label { font-size: .75rem; color: #6b7280; }
+  .person-mini { font-size: .82rem; color: #374151; margin-top: 10px; border-top: 1px solid #f3f4f6; padding-top: 8px; }
+  .person-mini div { margin-bottom: 3px; }
+  .person-mini span { color: #9ca3af; }
+
+  /* Agreement table */
+  .section-title { font-size: 1rem; font-weight: 700; color: #374151; margin: 0 0 12px; }
+  .agree-wrap { background: #fff; border-radius: 10px; box-shadow: 0 1px 10px rgba(0,0,0,.07); padding: 20px 24px; margin-bottom: 24px; overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: .85rem; }
+  th { background: #f0f2f5; padding: 9px 12px; text-align: left; font-weight: 600; color: #374151; }
+  td { padding: 8px 12px; border-bottom: 1px solid #f3f4f6; color: #111827; }
+  td.mismatch { background: #fff1f2; color: #991b1b; }
+  td.match { background: #f0fdf4; color: #065f46; }
+  .field-col { color: #6b7280; font-size: .82rem; text-transform: capitalize; }
+
+  .back-link { display: inline-block; color: #4f46e5; text-decoration: none; font-size: .9rem; margin-bottom: 32px; }
+  .back-link:hover { text-decoration: underline; }
+  .no-data { color: #9ca3af; font-style: italic; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Model Comparison</h1>
+  <div class="sub">Upload ID: {{ upload_id }}</div>
+</header>
+<main>
+  {% set model_names = results.keys() | list %}
+
+  <!-- Per-model summary cards -->
+  <div class="model-grid">
+  {% for model_name, result in results.items() %}
+    {% set persons = result.get("persons", []) %}
+    {% set conf = persons[0].get("confidence", 0) if persons else 0 %}
+    {% set routing = "easy" if conf >= 0.85 else "hard" %}
+    {% set pct = (conf * 100) | int %}
+    {% if pct >= 85 %}{% set bar_color = "#10b981" %}
+    {% elif pct >= 60 %}{% set bar_color = "#f59e0b" %}
+    {% else %}{% set bar_color = "#ef4444" %}{% endif %}
+    <div class="model-card">
+      <h3>{{ model_name }}</h3>
+      <span class="badge {{ routing }}">{% if routing == "easy" %}&#10003; EASY{% else %}&#9873; HARD{% endif %}</span>
+      <div class="conf-bar-bg">
+        <div class="conf-bar-fill" style="width:{{ pct }}%; background:{{ bar_color }};"></div>
+      </div>
+      <div class="conf-label">{{ "%.1f"|format(conf * 100) }}% confidence</div>
+      {% if case_ids.get(model_name) %}
+        <div style="font-size:.75rem;color:#991b1b;margin-top:4px;">Case ID: {{ case_ids[model_name][:8] }}&hellip;</div>
+      {% endif %}
+      {% if persons %}
+        <div class="person-mini">
+          {% for person in persons %}
+          <div><span>Barcode:</span> {{ person.get("barcode_number") or "—" }}</div>
+          <div><span>Name:</span> {{ person.get("name") or "—" }}</div>
+          <div><span>User ID:</span> {{ person.get("user_id") or "—" }}</div>
+          <div><span>Category:</span> {{ person.get("category") or "—" }}</div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="person-mini no-data">No persons extracted</div>
+      {% endif %}
+    </div>
+  {% endfor %}
+  </div>
+
+  <!-- Agreement table: one section per person index -->
+  {% set max_persons = namespace(val=0) %}
+  {% for model_name, result in results.items() %}
+    {% if result.get("persons", []) | length > max_persons.val %}
+      {% set max_persons.val = result.get("persons", []) | length %}
+    {% endif %}
+  {% endfor %}
+
+  {% if max_persons.val > 0 %}
+  <div class="agree-wrap">
+    <p class="section-title">Field Agreement</p>
+    {% for person_idx in range(max_persons.val) %}
+      {% if max_persons.val > 1 %}<p style="font-weight:600;color:#6b7280;font-size:.85rem;">Person {{ person_idx + 1 }}</p>{% endif %}
+      <table>
+        <thead>
+          <tr>
+            <th>Field</th>
+            {% for model_name in model_names %}<th>{{ model_name }}</th>{% endfor %}
+          </tr>
+        </thead>
+        <tbody>
+          {% for field_key in ["barcode_number", "name", "user_id", "category", "confidence"] %}
+            {% set row_vals = [] %}
+            {% for model_name in model_names %}
+              {% set persons = results[model_name].get("persons", []) %}
+              {% if persons | length > person_idx %}
+                {% set _ = row_vals.append(persons[person_idx].get(field_key, "") | string) %}
+              {% else %}
+                {% set _ = row_vals.append("—") %}
+              {% endif %}
+            {% endfor %}
+            {% set all_same = (row_vals | unique | list | length) <= 1 %}
+            <tr>
+              <td class="field-col">{{ field_key.replace("_", " ") }}</td>
+              {% for val in row_vals %}
+                <td class="{{ 'match' if all_same else 'mismatch' }}">{{ val }}</td>
+              {% endfor %}
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% endfor %}
+  </div>
+  {% else %}
+    <div class="agree-wrap no-data">No persons were extracted by any model.</div>
+  {% endif %}
+
+  <a class="back-link" href="/demo">&larr; Upload another</a>
+</main>
+</body>
+</html>

@@ -1,0 +1,1094 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Document AI Pipeline — Demo</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0f172a;
+    --card: #1e293b;
+    --card2: #263548;
+    --blue: #3b82f6;
+    --blue-light: #60a5fa;
+    --green: #10b981;
+    --orange: #f59e0b;
+    --red: #ef4444;
+    --purple: #8b5cf6;
+    --text: #e2e8f0;
+    --muted: #94a3b8;
+    --border: #334155;
+    --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --mono: "SF Mono", "Fira Code", "Cascadia Code", Consolas, monospace;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: var(--font);
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    font-size: 16px;
+  }
+
+  /* ── NAV ── */
+  nav {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(15, 23, 42, 0.92);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    padding: 0 2rem;
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+    height: 56px;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+
+  nav .brand {
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: var(--blue-light);
+    flex-shrink: 0;
+    letter-spacing: -0.02em;
+  }
+
+  nav a {
+    color: var(--muted);
+    text-decoration: none;
+    font-size: 0.85rem;
+    transition: color 0.2s;
+    flex-shrink: 0;
+  }
+  nav a:hover { color: var(--text); }
+
+  /* ── SECTIONS ── */
+  section { padding: 5rem 2rem; max-width: 1100px; margin: 0 auto; }
+
+  h2 {
+    font-size: 1.75rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    letter-spacing: -0.03em;
+  }
+  h3 { font-size: 1.1rem; font-weight: 600; margin-bottom: 0.5rem; }
+  p { color: var(--muted); }
+  .section-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--blue);
+    margin-bottom: 0.5rem;
+  }
+
+  /* ── HERO ── */
+  #hero {
+    min-height: 92vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    padding: 4rem 2rem;
+    max-width: 100%;
+    background: radial-gradient(ellipse 80% 60% at 50% 0%, rgba(59,130,246,0.15) 0%, transparent 70%);
+  }
+
+  .hero-title {
+    font-size: clamp(2.2rem, 6vw, 4rem);
+    font-weight: 800;
+    letter-spacing: -0.04em;
+    line-height: 1.1;
+    background: linear-gradient(135deg, #fff 40%, #93c5fd 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 1.25rem;
+  }
+
+  .hero-tagline {
+    font-size: clamp(1rem, 2.5vw, 1.25rem);
+    color: var(--muted);
+    max-width: 640px;
+    margin-bottom: 2.5rem;
+    line-height: 1.7;
+  }
+
+  .badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    justify-content: center;
+    margin-bottom: 3rem;
+  }
+
+  .badge {
+    padding: 0.35rem 0.9rem;
+    border-radius: 9999px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    border: 1px solid;
+  }
+  .badge-blue  { background: rgba(59,130,246,0.15); border-color: rgba(59,130,246,0.4); color: var(--blue-light); }
+  .badge-green { background: rgba(16,185,129,0.12); border-color: rgba(16,185,129,0.35); color: #34d399; }
+  .badge-purple{ background: rgba(139,92,246,0.12); border-color: rgba(139,92,246,0.35); color: #a78bfa; }
+  .badge-orange{ background: rgba(245,158,11,0.12); border-color: rgba(245,158,11,0.35); color: #fbbf24; }
+
+  .hero-scroll {
+    font-size: 0.8rem;
+    color: var(--muted);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.4rem;
+  }
+  .scroll-arrow {
+    width: 20px; height: 20px;
+    border-right: 2px solid var(--muted);
+    border-bottom: 2px solid var(--muted);
+    transform: rotate(45deg);
+    animation: bounce 1.6s infinite;
+  }
+  @keyframes bounce { 0%,100%{transform:rotate(45deg) translateY(0)} 50%{transform:rotate(45deg) translateY(5px)} }
+
+  /* ── CARDS GRID ── */
+  .cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.25rem;
+    margin-top: 2.5rem;
+  }
+
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.5rem;
+    transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+  }
+  .card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 32px rgba(0,0,0,0.4);
+    border-color: rgba(59,130,246,0.4);
+  }
+  .card-icon { font-size: 1.75rem; margin-bottom: 0.75rem; }
+  .card h3 { color: var(--text); margin-bottom: 0.4rem; }
+  .card p { font-size: 0.88rem; }
+
+  /* ── ARCHITECTURE ── */
+  .arch-wrap {
+    margin-top: 2.5rem;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 2.5rem 2rem;
+    overflow-x: auto;
+  }
+
+  .arch-col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+  }
+
+  .arch-box {
+    padding: 0.55rem 1.2rem;
+    border-radius: 8px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    border: 2px solid;
+    white-space: nowrap;
+    text-align: center;
+  }
+  .arch-input  { background: rgba(59,130,246,0.1); border-color: var(--blue); color: var(--blue-light); }
+  .arch-util   { background: rgba(100,116,139,0.15); border-color: #64748b; color: #94a3b8; }
+  .arch-model  { background: rgba(59,130,246,0.12); border-color: rgba(59,130,246,0.6); color: var(--blue-light); }
+  .arch-conf   { background: rgba(139,92,246,0.12); border-color: rgba(139,92,246,0.6); color: #c4b5fd; }
+  .arch-easy   { background: rgba(16,185,129,0.12); border-color: rgba(16,185,129,0.6); color: #6ee7b7; }
+  .arch-hard   { background: rgba(245,158,11,0.12); border-color: rgba(245,158,11,0.5); color: #fcd34d; }
+  .arch-hitl   { background: rgba(139,92,246,0.15); border-color: rgba(139,92,246,0.7); color: #c4b5fd; }
+  .arch-retrain{ background: rgba(16,185,129,0.12); border-color: rgba(16,185,129,0.5); color: #6ee7b7; }
+
+  .arch-arrow {
+    color: var(--muted);
+    font-size: 1.1rem;
+    line-height: 1.4;
+    text-align: center;
+  }
+
+  .arch-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+  }
+
+  .arch-branch {
+    display: flex;
+    justify-content: center;
+    gap: 2rem;
+    flex-wrap: wrap;
+  }
+
+  .arch-divider {
+    width: 2px;
+    height: 28px;
+    background: var(--border);
+    margin: 0 auto;
+  }
+  .arch-line {
+    height: 2px;
+    background: var(--border);
+    flex: 1;
+    min-width: 20px;
+  }
+
+  /* ── DIRECTORY TREE ── */
+  .code-block {
+    background: #0d1117;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.75rem 1.5rem;
+    overflow-x: auto;
+    margin-top: 2rem;
+    font-family: var(--mono);
+    font-size: 0.83rem;
+    line-height: 1.8;
+  }
+  .code-block .dir  { color: var(--blue-light); font-weight: 600; }
+  .code-block .file { color: var(--text); }
+  .code-block .comm { color: var(--muted); }
+  .code-block .root { color: #f8fafc; font-weight: 700; font-size: 0.9rem; }
+
+  /* ── WALKTHROUGH ── */
+  .steps { margin-top: 2.5rem; display: flex; flex-direction: column; gap: 2rem; }
+
+  .step {
+    display: grid;
+    grid-template-columns: 48px 1fr;
+    gap: 1.25rem;
+    align-items: start;
+  }
+
+  .step-num {
+    width: 48px; height: 48px;
+    border-radius: 50%;
+    background: rgba(59,130,246,0.15);
+    border: 2px solid rgba(59,130,246,0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    color: var(--blue-light);
+    font-size: 1rem;
+    flex-shrink: 0;
+  }
+
+  .step-body h3 { color: var(--text); margin-bottom: 0.75rem; }
+
+  .form-mock {
+    background: var(--card);
+    border: 2px dashed var(--border);
+    border-radius: 10px;
+    padding: 1.25rem 1.5rem;
+    font-family: var(--mono);
+    font-size: 0.85rem;
+    color: var(--text);
+    line-height: 1.8;
+    display: inline-block;
+  }
+  .form-mock .barcode { background: #1a1a2e; color: #00ff88; padding: 0 4px; border-radius: 3px; }
+
+  .model-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1rem;
+  }
+
+  .model-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.1rem;
+  }
+  .model-card h4 { font-size: 0.82rem; font-weight: 700; color: var(--blue-light); margin-bottom: 0.75rem; }
+
+  .field-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.78rem;
+    padding: 0.2rem 0;
+    border-bottom: 1px solid rgba(51,65,85,0.5);
+  }
+  .field-row:last-child { border-bottom: none; }
+  .field-key { color: var(--muted); }
+  .field-val { color: var(--text); font-family: var(--mono); font-size: 0.75rem; }
+
+  .conf-bar-wrap { margin: 0.75rem 0 0.6rem; }
+  .conf-label { font-size: 0.73rem; color: var(--muted); margin-bottom: 0.3rem; display: flex; justify-content: space-between; }
+  .conf-bar { height: 6px; background: var(--border); border-radius: 9999px; overflow: hidden; }
+  .conf-fill { height: 100%; border-radius: 9999px; }
+  .fill-green  { background: var(--green); }
+  .fill-orange { background: var(--orange); }
+  .fill-red    { background: var(--red); }
+
+  .status-pill {
+    display: inline-block;
+    padding: 0.25rem 0.65rem;
+    border-radius: 9999px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+  }
+  .pill-easy { background: rgba(16,185,129,0.15); color: #34d399; border: 1px solid rgba(16,185,129,0.4); }
+  .pill-hard { background: rgba(239,68,68,0.15); color: #f87171; border: 1px solid rgba(239,68,68,0.4); }
+  .pill-pending { background: rgba(245,158,11,0.15); color: #fbbf24; border: 1px solid rgba(245,158,11,0.4); }
+  .pill-done { background: rgba(16,185,129,0.15); color: #34d399; border: 1px solid rgba(16,185,129,0.4); }
+
+  /* Queue table */
+  .queue-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 0.75rem;
+    font-size: 0.83rem;
+  }
+  .queue-table th {
+    text-align: left;
+    padding: 0.6rem 0.9rem;
+    border-bottom: 2px solid var(--border);
+    color: var(--muted);
+    font-weight: 600;
+    font-size: 0.75rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+  .queue-table td {
+    padding: 0.7rem 0.9rem;
+    border-bottom: 1px solid var(--border);
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 0.8rem;
+  }
+  .queue-table tr:last-child td { border-bottom: none; }
+  .queue-table tr:hover td { background: rgba(59,130,246,0.04); }
+
+  .btn {
+    padding: 0.35rem 0.75rem;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    cursor: pointer;
+    border: 1px solid;
+    transition: opacity 0.2s;
+  }
+  .btn:hover { opacity: 0.8; }
+  .btn-blue   { background: rgba(59,130,246,0.15); border-color: rgba(59,130,246,0.5); color: var(--blue-light); }
+  .btn-green  { background: rgba(16,185,129,0.15); border-color: rgba(16,185,129,0.5); color: #34d399; }
+
+  /* Review form mock */
+  .review-mock {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.5rem;
+    display: grid;
+    grid-template-columns: 1fr 1.5fr;
+    gap: 1.5rem;
+  }
+  .img-placeholder {
+    background: var(--card2);
+    border: 2px dashed var(--border);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 160px;
+    color: var(--muted);
+    font-size: 0.8rem;
+    text-align: center;
+    padding: 1rem;
+  }
+  .review-fields { display: flex; flex-direction: column; gap: 0.75rem; }
+  .field-group label { display: block; font-size: 0.72rem; color: var(--muted); font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; margin-bottom: 0.3rem; }
+  .field-group input {
+    width: 100%;
+    background: var(--card2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 0.45rem 0.75rem;
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 0.82rem;
+    pointer-events: none;
+  }
+  .review-btns { display: flex; gap: 0.75rem; margin-top: 0.5rem; flex-wrap: wrap; }
+
+  /* Feedback timeline */
+  .timeline {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    margin-top: 1.25rem;
+    flex-wrap: wrap;
+    row-gap: 0.75rem;
+  }
+  .tl-step {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.65rem 1rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text);
+    white-space: nowrap;
+  }
+  .tl-step.blue   { border-color: rgba(59,130,246,0.5); color: var(--blue-light); background: rgba(59,130,246,0.08); }
+  .tl-step.green  { border-color: rgba(16,185,129,0.5); color: #34d399; background: rgba(16,185,129,0.08); }
+  .tl-step.purple { border-color: rgba(139,92,246,0.5); color: #c4b5fd; background: rgba(139,92,246,0.08); }
+  .tl-step.orange { border-color: rgba(245,158,11,0.5); color: #fbbf24; background: rgba(245,158,11,0.08); }
+  .tl-arrow { color: var(--muted); font-size: 1.1rem; padding: 0 0.4rem; }
+
+  /* API table */
+  .api-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1.75rem;
+    font-size: 0.85rem;
+  }
+  .api-table th {
+    text-align: left;
+    padding: 0.65rem 1rem;
+    background: var(--card2);
+    border-bottom: 2px solid var(--border);
+    color: var(--muted);
+    font-weight: 600;
+    font-size: 0.75rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+  .api-table td {
+    padding: 0.7rem 1rem;
+    border-bottom: 1px solid var(--border);
+    color: var(--text);
+  }
+  .api-table tr:last-child td { border-bottom: none; }
+  .api-table tr:hover td { background: rgba(59,130,246,0.04); }
+  .api-table .endpoint { font-family: var(--mono); color: var(--blue-light); font-size: 0.82rem; }
+  .method {
+    display: inline-block;
+    padding: 0.15rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    font-family: var(--mono);
+  }
+  .method-get  { background: rgba(16,185,129,0.15); color: #34d399; }
+  .method-post { background: rgba(59,130,246,0.15); color: var(--blue-light); }
+  .api-tag {
+    font-size: 0.72rem;
+    padding: 0.15rem 0.45rem;
+    border-radius: 4px;
+    margin-left: 0.4rem;
+    font-weight: 600;
+  }
+  .tag-hitl { background: rgba(139,92,246,0.15); color: #c4b5fd; }
+
+  /* Code block for quickstart */
+  .cmd-block {
+    background: #0d1117;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    margin-top: 1.5rem;
+  }
+  .cmd-header {
+    background: var(--card2);
+    border-bottom: 1px solid var(--border);
+    padding: 0.6rem 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .cmd-dots { display: flex; gap: 6px; }
+  .cmd-dot {
+    width: 12px; height: 12px;
+    border-radius: 50%;
+  }
+  .dot-r { background: #ff5f57; }
+  .dot-y { background: #ffbd2e; }
+  .dot-g { background: #28c840; }
+  .cmd-lang { font-size: 0.75rem; color: var(--muted); margin-left: auto; font-family: var(--mono); }
+  .cmd-code {
+    padding: 1.5rem;
+    font-family: var(--mono);
+    font-size: 0.82rem;
+    line-height: 1.85;
+    overflow-x: auto;
+  }
+  .cmd-comment { color: #6e7681; }
+  .cmd-cmd     { color: #79c0ff; }
+  .cmd-arg     { color: #a5d6ff; }
+  .cmd-str     { color: #a8ff78; }
+
+  /* Footer */
+  footer {
+    text-align: center;
+    padding: 3rem 2rem;
+    border-top: 1px solid var(--border);
+    color: var(--muted);
+    font-size: 0.83rem;
+  }
+  footer a { color: var(--blue-light); text-decoration: none; }
+  footer a:hover { text-decoration: underline; }
+
+  /* Dividers */
+  .section-divider {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--border), transparent);
+    margin: 0 2rem;
+  }
+
+  /* Responsive */
+  @media (max-width: 640px) {
+    nav { gap: 1.25rem; }
+    section { padding: 3rem 1.25rem; }
+    .review-mock { grid-template-columns: 1fr; }
+    .arch-branch { gap: 0.75rem; }
+    .timeline { flex-direction: column; align-items: flex-start; }
+    .tl-arrow { transform: rotate(90deg); }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <span class="brand">⚡ Doc AI Pipeline</span>
+  <a href="#features">Features</a>
+  <a href="#architecture">Architecture</a>
+  <a href="#structure">Structure</a>
+  <a href="#walkthrough">Walkthrough</a>
+  <a href="#api">API</a>
+  <a href="#quickstart">Quick Start</a>
+</nav>
+
+<!-- HERO -->
+<section id="hero">
+  <div class="section-label">AI / ML · Computer Vision · NLP</div>
+  <h1 class="hero-title">Document AI Pipeline</h1>
+  <p class="hero-tagline">End-to-end extraction from handwritten Korean form images — with confidence-based HITL routing and continuous learning feedback loops.</p>
+  <div class="badges">
+    <span class="badge badge-blue">3 Model Backends</span>
+    <span class="badge badge-purple">HITL Feedback Loop</span>
+    <span class="badge badge-green">Docker Ready</span>
+    <span class="badge badge-orange">Korean HTR</span>
+    <span class="badge badge-blue">Platt Calibration</span>
+    <span class="badge badge-green">FastAPI + SQLite</span>
+  </div>
+  <div class="hero-scroll">
+    <span>Explore</span>
+    <div class="scroll-arrow"></div>
+  </div>
+</section>
+
+<div class="section-divider"></div>
+
+<!-- FEATURES -->
+<section id="features" style="max-width:1100px;margin:0 auto;padding:5rem 2rem;">
+  <div class="section-label">Capabilities</div>
+  <h2>What It Does</h2>
+  <p>Three model backends, one unified API, and a full human-in-the-loop correction cycle.</p>
+
+  <div class="cards-grid">
+    <div class="card">
+      <div class="card-icon">🔍</div>
+      <h3>Multi-Model Extraction</h3>
+      <p>Qwen2-VL-2B, Donut, and PaddleOCR+TrOCR run in parallel. Results are compared to find the most confident extraction across all three backends.</p>
+    </div>
+    <div class="card">
+      <div class="card-icon">🎯</div>
+      <h3>Confidence Routing</h3>
+      <p>Platt-calibrated probability scores route easy cases (≥ 0.85) straight through to the response. Hard cases are queued for human review automatically.</p>
+    </div>
+    <div class="card">
+      <div class="card-icon">🔄</div>
+      <h3>HITL Feedback Loop</h3>
+      <p>Human corrections in the review app automatically flow back through export_feedback.py into the next training run — the model gets better with every correction.</p>
+    </div>
+    <div class="card">
+      <div class="card-icon">📊</div>
+      <h3>Benchmark Suite</h3>
+      <p>Built-in benchmark.py compares all three models on accuracy, latency, and percentage of hard-routed cases across your evaluation dataset.</p>
+    </div>
+    <div class="card">
+      <div class="card-icon">🐳</div>
+      <h3>Docker Compose</h3>
+      <p>Two isolated services (pipeline :8000, HITL :8001) sharing a single SQLite database, brought up with one command: <code style="color:var(--blue-light);font-family:var(--mono);font-size:0.8rem;">docker compose up --build</code></p>
+    </div>
+    <div class="card">
+      <div class="card-icon">🇰🇷</div>
+      <h3>Korean HTR</h3>
+      <p>Native Korean handwriting recognition across all three backends. Tested on real Korean registration and intake forms with mixed print and cursive script.</p>
+    </div>
+  </div>
+</section>
+
+<div class="section-divider"></div>
+
+<!-- ARCHITECTURE -->
+<section id="architecture">
+  <div class="section-label">System Design</div>
+  <h2>Architecture</h2>
+  <p>From raw image input to extracted fields — or to the HITL queue when confidence is low.</p>
+
+  <div class="arch-wrap">
+    <div class="arch-col">
+
+      <!-- Input -->
+      <div class="arch-box arch-input">📷 Image Input</div>
+      <div class="arch-divider"></div>
+
+      <!-- Parallel utilities -->
+      <div class="arch-row" style="width:100%;max-width:520px;">
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;">
+          <div class="arch-box arch-util">🔲 Barcode Reader (pyzbar)</div>
+        </div>
+        <div class="arch-arrow" style="padding:0 0.5rem;">│</div>
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;">
+          <div class="arch-box arch-util">📐 Layout Detector (PaddleOCR)</div>
+        </div>
+      </div>
+      <div class="arch-divider"></div>
+
+      <!-- Person regions -->
+      <div class="arch-box arch-util" style="border-color:rgba(99,102,241,0.5);color:#a5b4fc;background:rgba(99,102,241,0.08);">👤 Person Regions Extracted</div>
+      <div class="arch-divider"></div>
+
+      <!-- Three models -->
+      <div class="arch-branch" style="width:100%;max-width:640px;padding:0 0.5rem;">
+        <div style="display:flex;flex-direction:column;align-items:center;gap:0.3rem;">
+          <div class="arch-arrow">↓</div>
+          <div class="arch-box arch-model">🤖 Qwen2-VL-2B<br><span style="font-weight:400;font-size:0.73rem;">+ LoRA adapter</span></div>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:center;gap:0.3rem;">
+          <div class="arch-arrow">↓</div>
+          <div class="arch-box arch-model">📄 Donut<br><span style="font-weight:400;font-size:0.73rem;">OCR-free E2E</span></div>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:center;gap:0.3rem;">
+          <div class="arch-arrow">↓</div>
+          <div class="arch-box arch-model">🏓 PaddleOCR<br><span style="font-weight:400;font-size:0.73rem;">+ TrOCR heads</span></div>
+        </div>
+      </div>
+      <div class="arch-divider"></div>
+
+      <!-- Confidence -->
+      <div class="arch-box arch-conf">📈 Confidence Scorer · Platt Calibration</div>
+      <div class="arch-divider"></div>
+
+      <!-- Branch easy / hard -->
+      <div class="arch-row" style="width:100%;max-width:480px;">
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:0.4rem;">
+          <div class="arch-arrow">↙</div>
+          <div class="arch-box arch-easy">✅ ≥ 0.85 Easy<br><span style="font-weight:400;font-size:0.73rem;">Return to caller</span></div>
+        </div>
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:0.4rem;">
+          <div class="arch-arrow">↘</div>
+          <div class="arch-box arch-hard">⚠️ &lt; 0.85 Hard<br><span style="font-weight:400;font-size:0.73rem;">Enqueue for HITL</span></div>
+        </div>
+      </div>
+      <div style="display:flex;justify-content:center;margin-top:0;">
+        <div style="margin-left:55%;display:flex;flex-direction:column;align-items:center;">
+          <div class="arch-divider"></div>
+          <div class="arch-box arch-hitl">🧑‍💻 HITL Review App :8001<br><span style="font-weight:400;font-size:0.73rem;">Human corrects fields</span></div>
+          <div class="arch-divider"></div>
+          <div class="arch-box arch-hitl" style="font-size:0.78rem;">📤 export_feedback.py</div>
+          <div class="arch-divider"></div>
+          <div class="arch-box arch-retrain">🔁 retrain.py → LoRA Finetune</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<div class="section-divider"></div>
+
+<!-- DIRECTORY STRUCTURE -->
+<section id="structure">
+  <div class="section-label">Codebase</div>
+  <h2>Directory Structure</h2>
+  <p>Clean separation between the inference pipeline service and the HITL review app.</p>
+
+  <div class="code-block">
+<span class="root">doc-ai-pipeline/</span>
+├── <span class="dir">src/</span>
+│   ├── <span class="dir">pipeline/</span>              <span class="comm"># Inference API  (port 8000)</span>
+│   │   ├── <span class="dir">extractors/</span>
+│   │   │   ├── <span class="file">base.py</span>        <span class="comm"># BaseExtractor ABC</span>
+│   │   │   ├── <span class="file">qwen2vl.py</span>     <span class="comm"># Qwen2-VL-2B + LoRA</span>
+│   │   │   ├── <span class="file">donut.py</span>       <span class="comm"># OCR-free end-to-end</span>
+│   │   │   └── <span class="file">paddle_trocr.py</span> <span class="comm"># Layout + handwriting</span>
+│   │   ├── <span class="file">api.py</span>             <span class="comm"># FastAPI + demo UI</span>
+│   │   ├── <span class="file">orchestrator.py</span>    <span class="comm"># Multi-model runner</span>
+│   │   ├── <span class="file">confidence.py</span>      <span class="comm"># Platt calibration</span>
+│   │   └── <span class="file">case_store.py</span>      <span class="comm"># SQLite case management</span>
+│   └── <span class="dir">hitl/</span>
+│       └── <span class="file">app.py</span>             <span class="comm"># HITL Review App (port 8001)</span>
+├── <span class="dir">templates/</span>
+│   ├── <span class="dir">pipeline/</span>              <span class="comm"># Demo UI templates</span>
+│   └── <span class="dir">hitl/</span>                  <span class="comm"># Review queue templates</span>
+├── <span class="dir">scripts/</span>
+│   ├── <span class="file">calibrate.py</span>           <span class="comm"># Fit Platt calibrator</span>
+│   ├── <span class="file">benchmark.py</span>           <span class="comm"># 3-model comparison</span>
+│   ├── <span class="file">export_feedback.py</span>     <span class="comm"># Cases → training data</span>
+│   └── <span class="file">retrain.py</span>             <span class="comm"># Merge + trigger retrain</span>
+├── <span class="dir">tests/</span>                     <span class="comm"># pytest suite</span>
+├── <span class="dir">docs/</span>
+│   └── <span class="file">demo.html</span>              <span class="comm"># ← You are here</span>
+├── <span class="dir">data/</span>                      <span class="comm"># Runtime data (gitignored)</span>
+├── <span class="dir">docker/</span>
+│   ├── <span class="file">Dockerfile.pipeline</span>
+│   ├── <span class="file">Dockerfile.hitl</span>
+│   └── <span class="file">docker-compose.yml</span>
+└── <span class="file">pyproject.toml</span>             <span class="comm"># uv managed</span>
+  </div>
+</section>
+
+<div class="section-divider"></div>
+
+<!-- WALKTHROUGH -->
+<section id="walkthrough">
+  <div class="section-label">How It Works</div>
+  <h2>Step-by-Step Walkthrough</h2>
+  <p>Follow a single form image through the entire pipeline.</p>
+
+  <div class="steps">
+
+    <!-- Step 1 -->
+    <div class="step">
+      <div class="step-num">1</div>
+      <div class="step-body">
+        <h3>Image Input — Handwritten Korean Form</h3>
+        <p style="margin-bottom:0.9rem;">A scanned or photographed form image is submitted to <code style="color:var(--blue-light);font-family:var(--mono);font-size:0.8rem;">POST /extract</code> as a base64-encoded PNG or JPEG.</p>
+        <div class="form-mock">
+          ┌─────────────────────────────────────────────┐<br>
+          │  이름 (Name)    &nbsp; 김민준                       │<br>
+          │  사용자 ID &nbsp;&nbsp;&nbsp;&nbsp; USR-2024-0042             │<br>
+          │  바코드 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span class="barcode">▌▌▌▌▌ 322183406290 ▌▌▌▌▌</span> │<br>
+          │  분류 (Category) B                           │<br>
+          └─────────────────────────────────────────────┘
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 2 -->
+    <div class="step">
+      <div class="step-num">2</div>
+      <div class="step-body">
+        <h3>Extraction — 3 Models in Parallel</h3>
+        <p style="margin-bottom:0.9rem;">The orchestrator runs all three backends and scores each result with Platt calibration.</p>
+        <div class="model-cards">
+
+          <div class="model-card">
+            <h4>🤖 Qwen2-VL-2B</h4>
+            <div class="field-row"><span class="field-key">name</span><span class="field-val">김민준</span></div>
+            <div class="field-row"><span class="field-key">barcode</span><span class="field-val">322183406290</span></div>
+            <div class="field-row"><span class="field-key">user_id</span><span class="field-val">USR-2024-0042</span></div>
+            <div class="field-row"><span class="field-key">category</span><span class="field-val">B</span></div>
+            <div class="conf-bar-wrap">
+              <div class="conf-label"><span>Confidence</span><span>0.91</span></div>
+              <div class="conf-bar"><div class="conf-fill fill-green" style="width:91%"></div></div>
+            </div>
+            <span class="status-pill pill-easy">✅ EASY — AUTO-RETURNED</span>
+          </div>
+
+          <div class="model-card">
+            <h4>📄 Donut</h4>
+            <div class="field-row"><span class="field-key">name</span><span class="field-val">김민준</span></div>
+            <div class="field-row"><span class="field-key">barcode</span><span class="field-val">322183406290</span></div>
+            <div class="field-row"><span class="field-key">user_id</span><span class="field-val">USR-2024-0042</span></div>
+            <div class="field-row"><span class="field-key">category</span><span class="field-val">B</span></div>
+            <div class="conf-bar-wrap">
+              <div class="conf-label"><span>Confidence</span><span>0.78</span></div>
+              <div class="conf-bar"><div class="conf-fill fill-orange" style="width:78%"></div></div>
+            </div>
+            <span class="status-pill pill-hard">⚠️ HARD — QUEUED</span>
+          </div>
+
+          <div class="model-card">
+            <h4>🏓 PaddleOCR + TrOCR</h4>
+            <div class="field-row"><span class="field-key">name</span><span class="field-val">김민준</span></div>
+            <div class="field-row"><span class="field-key">barcode</span><span class="field-val">322183406290</span></div>
+            <div class="field-row"><span class="field-key">user_id</span><span class="field-val" style="color:var(--red);">USR-2024-0040</span></div>
+            <div class="field-row"><span class="field-key">category</span><span class="field-val">B</span></div>
+            <div class="conf-bar-wrap">
+              <div class="conf-label"><span>Confidence</span><span>0.65</span></div>
+              <div class="conf-bar"><div class="conf-fill fill-red" style="width:65%"></div></div>
+            </div>
+            <span class="status-pill pill-hard">⚠️ HARD — QUEUED</span>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 3 -->
+    <div class="step">
+      <div class="step-num">3</div>
+      <div class="step-body">
+        <h3>HITL Queue — Cases Awaiting Review</h3>
+        <p style="margin-bottom:0.9rem;">Hard cases land in the review queue at <code style="color:var(--blue-light);font-family:var(--mono);font-size:0.8rem;">http://localhost:8001/queue</code></p>
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;overflow:hidden;">
+          <table class="queue-table">
+            <thead>
+              <tr>
+                <th>Case ID</th>
+                <th>Model</th>
+                <th>Confidence</th>
+                <th>Status</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>case_7f3a…c12e</td>
+                <td>PaddleTrOCR</td>
+                <td><span style="color:var(--red);">0.65</span></td>
+                <td><span class="status-pill pill-pending">pending</span></td>
+                <td><button class="btn btn-blue">Open Case</button></td>
+              </tr>
+              <tr>
+                <td>case_2b91…44af</td>
+                <td>Donut</td>
+                <td><span style="color:var(--orange);">0.78</span></td>
+                <td><span class="status-pill pill-pending">pending</span></td>
+                <td><button class="btn btn-blue">Open Case</button></td>
+              </tr>
+              <tr>
+                <td>case_e04d…8801</td>
+                <td>Qwen2-VL</td>
+                <td><span style="color:var(--green);">0.91</span></td>
+                <td><span class="status-pill pill-done">approved</span></td>
+                <td><button class="btn btn-blue">View</button></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 4 -->
+    <div class="step">
+      <div class="step-num">4</div>
+      <div class="step-body">
+        <h3>Review Form — Human Corrects Fields</h3>
+        <p style="margin-bottom:0.9rem;">The reviewer sees the original image and the model's extracted fields side-by-side, and can submit corrections.</p>
+        <div class="review-mock">
+          <div class="img-placeholder">
+            📄 Form Image<br><br>
+            <span style="font-size:0.72rem;color:#475569;">(base64 decoded PNG<br>rendered here)</span>
+          </div>
+          <div class="review-fields">
+            <div class="field-group">
+              <label>Name</label>
+              <input type="text" value="김민준" readonly>
+            </div>
+            <div class="field-group">
+              <label>Barcode</label>
+              <input type="text" value="322183406290" readonly>
+            </div>
+            <div class="field-group">
+              <label>User ID <span style="color:var(--red);font-size:0.7rem;">← model said USR-2024-0040</span></label>
+              <input type="text" value="USR-2024-0042" readonly style="border-color:rgba(59,130,246,0.5);color:var(--blue-light);">
+            </div>
+            <div class="field-group">
+              <label>Category</label>
+              <input type="text" value="B" readonly>
+            </div>
+            <div class="review-btns">
+              <button class="btn btn-green">✓ Approve</button>
+              <button class="btn btn-blue">Submit Correction</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 5 -->
+    <div class="step">
+      <div class="step-num">5</div>
+      <div class="step-body">
+        <h3>Feedback Loop — Corrections Become Training Data</h3>
+        <p style="margin-bottom:0.9rem;">Every human correction automatically compounds into the next training run via a two-script pipeline.</p>
+        <div class="timeline">
+          <div class="tl-step blue">✏️ Case corrected</div>
+          <div class="tl-arrow">→</div>
+          <div class="tl-step purple">📤 export_feedback.py</div>
+          <div class="tl-arrow">→</div>
+          <div class="tl-step orange">📦 +1 training example</div>
+          <div class="tl-arrow">→</div>
+          <div class="tl-step purple">🔁 retrain.py</div>
+          <div class="tl-arrow">→</div>
+          <div class="tl-step green">🚀 Model improves</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<div class="section-divider"></div>
+
+<!-- API REFERENCE -->
+<section id="api">
+  <div class="section-label">Reference</div>
+  <h2>API Endpoints</h2>
+  <p>Both services expose a REST API. The pipeline service runs on port 8000; HITL on port 8001.</p>
+
+  <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-top:1.75rem;">
+    <table class="api-table">
+      <thead>
+        <tr>
+          <th>Endpoint</th>
+          <th>Method</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="endpoint">/health</td>
+          <td><span class="method method-get">GET</span></td>
+          <td>Service health check — returns model load status</td>
+        </tr>
+        <tr>
+          <td class="endpoint">/extract</td>
+          <td><span class="method method-post">POST</span></td>
+          <td>Extract fields from a base64-encoded image; returns JSON + confidence</td>
+        </tr>
+        <tr>
+          <td class="endpoint">/demo</td>
+          <td><span class="method method-get">GET</span></td>
+          <td>Browser upload demo UI — drag-and-drop extraction</td>
+        </tr>
+        <tr>
+          <td class="endpoint">/demo/compare/{id}</td>
+          <td><span class="method method-get">GET</span></td>
+          <td>Side-by-side 3-model comparison view for a given case</td>
+        </tr>
+        <tr>
+          <td class="endpoint">/queue <span class="api-tag tag-hitl">HITL</span></td>
+          <td><span class="method method-get">GET</span></td>
+          <td>Pending case queue — list all cases awaiting human review</td>
+        </tr>
+        <tr>
+          <td class="endpoint">/case/{id} <span class="api-tag tag-hitl">HITL</span></td>
+          <td><span class="method method-get">GET</span></td>
+          <td>Load a specific case for review with original image and extracted fields</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<div class="section-divider"></div>
+
+<!-- QUICK START -->
+<section id="quickstart">
+  <div class="section-label">Get Started</div>
+  <h2>Quick Start</h2>
+  <p>Run both services locally with uv, or spin up the full stack with Docker Compose.</p>
+
+  <div class="cmd-block">
+    <div class="cmd-header">
+      <div class="cmd-dots">
+        <div class="cmd-dot dot-r"></div>
+        <div class="cmd-dot dot-y"></div>
+        <div class="cmd-dot dot-g"></div>
+      </div>
+      <span class="cmd-lang">bash</span>
+    </div>
+    <div class="cmd-code">
+<span class="cmd-comment"># Clone and install dependencies with uv</span>
+<span class="cmd-cmd">git</span> <span class="cmd-arg">clone</span> <span class="cmd-str">https://github.com/arslankazmi/doc-ai-pipeline</span>
+<span class="cmd-cmd">cd</span> <span class="cmd-arg">doc-ai-pipeline</span>
+<span class="cmd-cmd">uv</span> <span class="cmd-arg">sync</span>
+
+<span class="cmd-comment"># Start the inference pipeline (port 8000)</span>
+<span class="cmd-cmd">PYTHONPATH=src</span> <span class="cmd-arg">uv run uvicorn pipeline.api:app --port 8000 --reload</span> &amp;
+
+<span class="cmd-comment"># Start the HITL review app (port 8001)</span>
+<span class="cmd-cmd">PYTHONPATH=src</span> <span class="cmd-arg">uv run uvicorn hitl.app:app --port 8001 --reload</span> &amp;
+
+<span class="cmd-comment"># Open the demo UI</span>
+<span class="cmd-cmd">open</span> <span class="cmd-str">http://localhost:8000/demo</span>
+    </div>
+  </div>
+
+  <div class="cmd-block" style="margin-top:1rem;">
+    <div class="cmd-header">
+      <div class="cmd-dots">
+        <div class="cmd-dot dot-r"></div>
+        <div class="cmd-dot dot-y"></div>
+        <div class="cmd-dot dot-g"></div>
+      </div>
+      <span class="cmd-lang">bash — Docker Compose</span>
+    </div>
+    <div class="cmd-code">
+<span class="cmd-comment"># Or run the full stack with Docker (no Python setup needed)</span>
+<span class="cmd-cmd">docker</span> <span class="cmd-arg">compose up --build</span>
+
+<span class="cmd-comment"># Pipeline API:  http://localhost:8000</span>
+<span class="cmd-comment"># HITL App:      http://localhost:8001</span>
+<span class="cmd-comment"># Demo UI:       http://localhost:8000/demo</span>
+    </div>
+  </div>
+
+  <div class="cmd-block" style="margin-top:1rem;">
+    <div class="cmd-header">
+      <div class="cmd-dots">
+        <div class="cmd-dot dot-r"></div>
+        <div class="cmd-dot dot-y"></div>
+        <div class="cmd-dot dot-g"></div>
+      </div>
+      <span class="cmd-lang">bash — Calibrate &amp; Benchmark</span>
+    </div>
+    <div class="cmd-code">
+<span class="cmd-comment"># Fit the Platt confidence calibrator on your eval set</span>
+<span class="cmd-cmd">uv</span> <span class="cmd-arg">run python scripts/calibrate.py</span>
+
+<span class="cmd-comment"># Benchmark all 3 models: accuracy, latency, hard-route %</span>
+<span class="cmd-cmd">uv</span> <span class="cmd-arg">run python scripts/benchmark.py</span>
+
+<span class="cmd-comment"># Export corrected cases as training data + retrain</span>
+<span class="cmd-cmd">uv</span> <span class="cmd-arg">run python scripts/export_feedback.py</span>
+<span class="cmd-cmd">uv</span> <span class="cmd-arg">run python scripts/retrain.py</span>
+    </div>
+  </div>
+
+</section>
+
+<div class="section-divider"></div>
+
+<!-- FOOTER -->
+<footer>
+  <p>Built by <strong>Arslan Kazmi</strong> · AI/ML Engineer</p>
+  <p style="margin-top:0.5rem;">
+    <a href="https://github.com/arslankazmi/doc-ai-pipeline">github.com/arslankazmi/doc-ai-pipeline</a>
+    &nbsp;·&nbsp;
+    Qwen2-VL · Donut · PaddleOCR · TrOCR · FastAPI · uv · Docker
+  </p>
+  <p style="margin-top:0.5rem;font-size:0.75rem;color:#475569;">Open this file directly in any browser — no server required.</p>
+</footer>
+
+</body>
+</html>

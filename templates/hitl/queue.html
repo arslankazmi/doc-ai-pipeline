@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+
+{% block title %}Review Queue — HITL{% endblock %}
+
+{% block content %}
+  <!-- Stats bar -->
+  <div class="stats-bar">
+    <div class="stat-pill">
+      <span class="stat-num">{{ stats.get('open', 0) }}</span>
+      <span class="stat-lbl">Open</span>
+    </div>
+    <div class="stat-pill">
+      <span class="stat-num">{{ stats.get('in_review', 0) }}</span>
+      <span class="stat-lbl">In Review</span>
+    </div>
+    <div class="stat-pill">
+      <span class="stat-num">{{ stats.get('corrected', 0) }}</span>
+      <span class="stat-lbl">Corrected</span>
+    </div>
+    <div class="stat-pill">
+      <span class="stat-num">{{ stats.get('approved', 0) }}</span>
+      <span class="stat-lbl">Approved</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <h1>Review Queue ({{ cases | length }} open case{{ 's' if cases | length != 1 else '' }})</h1>
+
+    {% if cases %}
+    <table>
+      <thead>
+        <tr>
+          <th>Case ID</th>
+          <th>Model</th>
+          <th>Confidence</th>
+          <th>Status</th>
+          <th>Created</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for case in cases %}
+        <tr>
+          <td style="font-family: monospace; font-size: 12px; color: #4a5568;">
+            {{ case.id[:8] }}…
+          </td>
+          <td>{{ case.model_name or '—' }}</td>
+          <td>
+            {% set conf = case.confidence %}
+            <span class="{{ confidence_class(conf) }}">
+              {% if conf is not none %}{{ '%.3f' | format(conf) }}{% else %}—{% endif %}
+            </span>
+          </td>
+          <td>
+            {% if case.status == 'open' %}
+              <span class="badge badge-open">open</span>
+            {% elif case.status == 'in_review' %}
+              <span class="badge badge-review">in review</span>
+            {% elif case.status == 'approved' %}
+              <span class="badge badge-approved">approved</span>
+            {% elif case.status == 'corrected' %}
+              <span class="badge badge-corrected">corrected</span>
+            {% else %}
+              <span class="badge">{{ case.status }}</span>
+            {% endif %}
+          </td>
+          <td style="color: #718096; font-size: 12px;">
+            {{ case.created_at[:19].replace('T', ' ') if case.created_at else '—' }}
+          </td>
+          <td>
+            <a class="btn btn-primary btn-sm" href="/case/{{ case.id }}">Open Case</a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="empty-state">
+      <div class="emoji">✅</div>
+      <p>No open cases — all caught up!</p>
+    </div>
+    {% endif %}
+  </div>
+{% endblock %}

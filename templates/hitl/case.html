@@ -1,0 +1,220 @@
+{% extends "base.html" %}
+
+{% block title %}Case {{ case.id[:8] }} — HITL Review{% endblock %}
+
+{% block content %}
+  <a class="back-link" href="/queue">← Back to Queue</a>
+
+  <!-- Case metadata -->
+  <div class="card">
+    <h1>Case <span style="font-family: monospace; font-size: 18px;">{{ case.id[:8] }}…</span></h1>
+    <div class="meta-row">
+      <div class="meta-item"><strong>Model:</strong> {{ case.model_name or '—' }}</div>
+      <div class="meta-item">
+        <strong>Confidence:</strong>
+        {% set conf = case.confidence %}
+        <span class="{{ confidence_class(conf) }}">
+          {% if conf is not none %}{{ '%.3f' | format(conf) }}{% else %}—{% endif %}
+        </span>
+      </div>
+      {% if case.confidence is not none and case.confidence < 0.5 %}
+      <span class="badge badge-hard">Hard</span>
+      {% endif %}
+      <div class="meta-item">
+        <strong>Status:</strong>
+        {% if case.status == 'open' %}
+          <span class="badge badge-open">open</span>
+        {% elif case.status == 'in_review' %}
+          <span class="badge badge-review">in review</span>
+        {% elif case.status == 'approved' %}
+          <span class="badge badge-approved">approved</span>
+        {% elif case.status == 'corrected' %}
+          <span class="badge badge-corrected">corrected</span>
+        {% else %}
+          <span class="badge">{{ case.status }}</span>
+        {% endif %}
+      </div>
+      <div class="meta-item" style="font-size: 12px; color: #718096;">
+        Created: {{ case.created_at[:19].replace('T', ' ') if case.created_at else '—' }}
+      </div>
+    </div>
+
+    <!-- Claim button if still open -->
+    {% if case.status == 'open' %}
+    <form method="post" action="/case/{{ case.id }}/claim" style="display: inline;">
+      <button type="submit" class="btn btn-primary btn-sm">Claim for Review</button>
+    </form>
+    {% endif %}
+  </div>
+
+  <!-- Image -->
+  <div class="card">
+    <h2>Document Image</h2>
+    {% if case.image_b64 %}
+      <img class="case-image" src="data:image/jpeg;base64,{{ case.image_b64 }}" alt="Document image" />
+    {% elif case.image_path %}
+      <div class="image-path-text">{{ case.image_path }}</div>
+    {% else %}
+      <div style="color: #718096; font-style: italic;">No image available</div>
+    {% endif %}
+  </div>
+
+  <!-- Model extraction (read-only) -->
+  <div class="card">
+    <h2>Model Extraction (read-only)</h2>
+    {% if persons %}
+      {% for p in persons %}
+      <div class="person-block">
+        <h3>Person {{ loop.index }}</h3>
+        <div class="person-grid">
+          <div class="field-group">
+            <label>Barcode Number</label>
+            <div class="readonly-block">{{ p.get('barcode_number', '—') }}</div>
+          </div>
+          <div class="field-group">
+            <label>Name</label>
+            <div class="readonly-block">{{ p.get('name', '—') }}</div>
+          </div>
+          <div class="field-group">
+            <label>User ID</label>
+            <div class="readonly-block">{{ p.get('user_id', '—') }}</div>
+          </div>
+          <div class="field-group">
+            <label>Category</label>
+            <div class="readonly-block">{{ p.get('category', '—') }}</div>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    {% else %}
+      <div class="readonly-block">{{ extraction | tojson(indent=2) if extraction else 'No extraction data' }}</div>
+    {% endif %}
+  </div>
+
+  <!-- Editable review form -->
+  {% if case.status in ('open', 'in_review') %}
+  <div class="card">
+    <h2>Review &amp; Correct</h2>
+    <form method="post" action="/case/{{ case.id }}/submit" id="review-form">
+
+      {% if persons %}
+        {% for p in persons %}
+        <div class="person-block">
+          <h3>Person {{ loop.index }}</h3>
+          <div class="person-grid">
+            <div class="field-group">
+              <label for="barcode_number_{{ loop.index0 }}">Barcode Number</label>
+              <input
+                type="text"
+                id="barcode_number_{{ loop.index0 }}"
+                name="barcode_number_{{ loop.index0 }}"
+                value="{{ p.get('barcode_number', '') }}"
+              />
+            </div>
+            <div class="field-group">
+              <label for="name_{{ loop.index0 }}">Name</label>
+              <input
+                type="text"
+                id="name_{{ loop.index0 }}"
+                name="name_{{ loop.index0 }}"
+                value="{{ p.get('name', '') }}"
+              />
+            </div>
+            <div class="field-group">
+              <label for="user_id_{{ loop.index0 }}">User ID</label>
+              <input
+                type="text"
+                id="user_id_{{ loop.index0 }}"
+                name="user_id_{{ loop.index0 }}"
+                value="{{ p.get('user_id', '') }}"
+              />
+            </div>
+            <div class="field-group">
+              <label for="category_{{ loop.index0 }}">Category</label>
+              <select id="category_{{ loop.index0 }}" name="category_{{ loop.index0 }}">
+                <option value="" {% if not p.get('category') %}selected{% endif %}>— select —</option>
+                <option value="A" {% if p.get('category') == 'A' %}selected{% endif %}>A</option>
+                <option value="B" {% if p.get('category') == 'B' %}selected{% endif %}>B</option>
+                <option value="C" {% if p.get('category') == 'C' %}selected{% endif %}>C</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      {% else %}
+        <!-- No persons in extraction — show one blank entry -->
+        <div class="person-block">
+          <h3>Person 1</h3>
+          <div class="person-grid">
+            <div class="field-group">
+              <label for="barcode_number_0">Barcode Number</label>
+              <input type="text" id="barcode_number_0" name="barcode_number_0" value="" />
+            </div>
+            <div class="field-group">
+              <label for="name_0">Name</label>
+              <input type="text" id="name_0" name="name_0" value="" />
+            </div>
+            <div class="field-group">
+              <label for="user_id_0">User ID</label>
+              <input type="text" id="user_id_0" name="user_id_0" value="" />
+            </div>
+            <div class="field-group">
+              <label for="category_0">Category</label>
+              <select id="category_0" name="category_0">
+                <option value="">— select —</option>
+                <option value="A">A</option>
+                <option value="B">B</option>
+                <option value="C">C</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      {% endif %}
+
+      <!-- Reviewer notes -->
+      <div class="field-group">
+        <label for="reviewer_notes">Reviewer Notes</label>
+        <textarea id="reviewer_notes" name="reviewer_notes" placeholder="Optional notes…">{{ case.reviewer_notes or '' }}</textarea>
+      </div>
+
+      <!-- Hidden action field, set by buttons -->
+      <input type="hidden" name="action" id="action-field" value="approve" />
+
+      <div class="action-row">
+        <button
+          type="submit"
+          class="btn btn-success"
+          onclick="document.getElementById('action-field').value='approve'"
+        >
+          Approve (Correct)
+        </button>
+        <button
+          type="submit"
+          class="btn btn-blue"
+          onclick="document.getElementById('action-field').value='correct'"
+        >
+          Submit Correction
+        </button>
+      </div>
+    </form>
+  </div>
+  {% else %}
+  <!-- Already reviewed -->
+  <div class="card">
+    <h2>Already Reviewed</h2>
+    <p style="color: #718096;">This case has status <strong>{{ case.status }}</strong> and cannot be edited again.</p>
+    {% if case.corrected %}
+    <div style="margin-top: 12px;">
+      <h3>Corrected Data</h3>
+      <div class="readonly-block">{{ case.corrected | tojson(indent=2) }}</div>
+    </div>
+    {% endif %}
+    {% if case.reviewer_notes %}
+    <div style="margin-top: 12px;">
+      <h3>Reviewer Notes</h3>
+      <div class="readonly-block">{{ case.reviewer_notes }}</div>
+    </div>
+    {% endif %}
+  </div>
+  {% endif %}
+{% endblock %}

@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% block title %}Document AI — HITL Review{% endblock %}</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      font-size: 14px;
+      background: #f5f6f8;
+      color: #1a202c;
+      min-height: 100vh;
+    }
+
+    /* ── Header ─────────────────────────────────────────────────────── */
+    header {
+      background: #0d1b2a;
+      color: #fff;
+      padding: 0 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 52px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 2px 6px rgba(0,0,0,.35);
+    }
+
+    header .brand {
+      font-size: 16px;
+      font-weight: 700;
+      letter-spacing: .3px;
+      color: #fff;
+      text-decoration: none;
+    }
+
+    header .brand span {
+      color: #e53e3e;
+    }
+
+    header nav a {
+      color: #cbd5e0;
+      text-decoration: none;
+      margin-left: 24px;
+      font-size: 13px;
+      font-weight: 500;
+      transition: color .15s;
+    }
+
+    header nav a:hover { color: #fff; }
+    header nav a.active { color: #fff; border-bottom: 2px solid #e53e3e; padding-bottom: 2px; }
+
+    /* ── Main wrapper ────────────────────────────────────────────────── */
+    .container {
+      max-width: 900px;
+      margin: 32px auto;
+      padding: 0 16px;
+    }
+
+    /* ── Cards ───────────────────────────────────────────────────────── */
+    .card {
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 1px 4px rgba(0,0,0,.08);
+      padding: 24px;
+      margin-bottom: 20px;
+    }
+
+    /* ── Page heading ────────────────────────────────────────────────── */
+    h1 { font-size: 22px; font-weight: 700; margin-bottom: 16px; color: #1a202c; }
+    h2 { font-size: 17px; font-weight: 600; margin-bottom: 12px; color: #2d3748; }
+    h3 { font-size: 14px; font-weight: 600; margin-bottom: 8px; color: #4a5568; }
+
+    /* ── Tables ──────────────────────────────────────────────────────── */
+    table { width: 100%; border-collapse: collapse; }
+    th {
+      text-align: left;
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .5px;
+      color: #718096;
+      padding: 8px 12px;
+      border-bottom: 1px solid #e2e8f0;
+    }
+    td {
+      padding: 10px 12px;
+      border-bottom: 1px solid #f0f2f5;
+      vertical-align: middle;
+    }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: #fafafa; }
+
+    /* ── Badges ──────────────────────────────────────────────────────── */
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: .3px;
+    }
+
+    .badge-open     { background: #ebf8ff; color: #2b6cb0; }
+    .badge-review   { background: #fefcbf; color: #975a16; }
+    .badge-approved { background: #f0fff4; color: #276749; }
+    .badge-corrected{ background: #fff5f5; color: #c53030; }
+    .badge-exported { background: #faf5ff; color: #553c9a; }
+    .badge-hard     { background: #fff5f5; color: #c53030; }
+
+    /* ── Confidence colours ──────────────────────────────────────────── */
+    .conf-red    { color: #c53030; font-weight: 700; }
+    .conf-orange { color: #c05621; font-weight: 600; }
+    .conf-yellow { color: #975a16; font-weight: 600; }
+    .conf-green  { color: #276749; font-weight: 600; }
+    .conf-unknown{ color: #718096; }
+
+    /* ── Buttons ──────────────────────────────────────────────────────── */
+    .btn {
+      display: inline-block;
+      padding: 7px 16px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      text-decoration: none;
+      transition: filter .15s;
+    }
+    .btn:hover { filter: brightness(90%); }
+    .btn-primary  { background: #2b6cb0; color: #fff; }
+    .btn-success  { background: #38a169; color: #fff; }
+    .btn-blue     { background: #3182ce; color: #fff; }
+    .btn-sm       { padding: 4px 10px; font-size: 12px; }
+
+    /* ── Forms ───────────────────────────────────────────────────────── */
+    label { display: block; font-size: 12px; font-weight: 600; color: #4a5568; margin-bottom: 4px; }
+
+    input[type="text"], textarea, select {
+      width: 100%;
+      padding: 7px 10px;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      font-size: 13px;
+      color: #1a202c;
+      background: #fff;
+      outline: none;
+      transition: border-color .15s;
+    }
+    input[type="text"]:focus,
+    textarea:focus,
+    select:focus { border-color: #3182ce; box-shadow: 0 0 0 2px rgba(49,130,206,.2); }
+
+    textarea { resize: vertical; min-height: 72px; }
+
+    .field-group { margin-bottom: 12px; }
+
+    .person-block {
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 16px;
+      background: #fafafa;
+    }
+
+    .person-block h3 { margin-bottom: 12px; color: #2d3748; }
+
+    .person-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    /* ── Stats bar ───────────────────────────────────────────────────── */
+    .stats-bar {
+      display: flex;
+      gap: 16px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+
+    .stat-pill {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      border-radius: 999px;
+      padding: 5px 14px;
+      font-size: 13px;
+    }
+
+    .stat-pill .stat-num { font-weight: 700; color: #1a202c; }
+    .stat-pill .stat-lbl { color: #718096; }
+
+    /* ── Empty state ─────────────────────────────────────────────────── */
+    .empty-state {
+      text-align: center;
+      padding: 48px 24px;
+      color: #718096;
+    }
+    .empty-state .emoji { font-size: 40px; margin-bottom: 12px; }
+    .empty-state p { font-size: 15px; }
+
+    /* ── Back link ───────────────────────────────────────────────────── */
+    .back-link {
+      display: inline-block;
+      margin-bottom: 20px;
+      color: #3182ce;
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 500;
+    }
+    .back-link:hover { text-decoration: underline; }
+
+    /* ── Image ───────────────────────────────────────────────────────── */
+    .case-image {
+      max-width: 100%;
+      border-radius: 6px;
+      border: 1px solid #e2e8f0;
+    }
+
+    .image-path-text {
+      font-family: monospace;
+      font-size: 12px;
+      color: #718096;
+      background: #f7f8fa;
+      padding: 8px 12px;
+      border-radius: 6px;
+      border: 1px solid #e2e8f0;
+      word-break: break-all;
+    }
+
+    /* ── Horizontal bar chart ────────────────────────────────────────── */
+    .bar-row { margin-bottom: 10px; }
+    .bar-label { font-size: 12px; color: #4a5568; margin-bottom: 3px; display: flex; justify-content: space-between; }
+    .bar-track { height: 12px; background: #f0f2f5; border-radius: 999px; overflow: hidden; }
+    .bar-fill  { height: 100%; border-radius: 999px; }
+
+    .action-row {
+      display: flex;
+      gap: 12px;
+      margin-top: 20px;
+    }
+
+    .readonly-block {
+      background: #f7f8fa;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      padding: 12px;
+      font-family: monospace;
+      font-size: 12px;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .meta-row {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+      margin-bottom: 12px;
+      align-items: center;
+    }
+    .meta-item { font-size: 13px; color: #4a5568; }
+    .meta-item strong { color: #1a202c; }
+  </style>
+  {% block extra_head %}{% endblock %}
+</head>
+<body>
+  <header>
+    <a class="brand" href="/queue">Document AI — <span>HITL</span> Review</a>
+    <nav>
+      <a href="/queue" {% if request.url.path.startswith('/queue') or request.url.path == '/' %}class="active"{% endif %}>Queue</a>
+      <a href="/stats" {% if request.url.path.startswith('/stats') %}class="active"{% endif %}>Stats</a>
+    </nav>
+  </header>
+
+  <div class="container">
+    {% block content %}{% endblock %}
+  </div>
+</body>
+</html>

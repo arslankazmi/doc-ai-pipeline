@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block title %}Case Reviewed — HITL{% endblock %}
+
+{% block content %}
+  <div class="card" style="text-align: center; padding: 48px 24px;">
+    <div style="font-size: 48px; margin-bottom: 16px;">
+      {% if status == 'approved' %}✅{% else %}✏️{% endif %}
+    </div>
+    <h1 style="margin-bottom: 8px;">
+      Case <span style="font-family: monospace;">{{ case_id[:8] }}…</span> reviewed
+    </h1>
+    <p style="color: #4a5568; margin-bottom: 20px;">
+      Status:
+      {% if status == 'approved' %}
+        <span class="badge badge-approved">approved</span>
+      {% else %}
+        <span class="badge badge-corrected">corrected</span>
+      {% endif %}
+    </p>
+    <a class="btn btn-primary" href="/queue">← Back to Queue</a>
+  </div>
+{% endblock %}

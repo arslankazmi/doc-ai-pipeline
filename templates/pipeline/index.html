@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Document AI — Extraction Demo</title>
+<link rel="stylesheet" href="/static/style.css">
+<style>
+  html, body { height: 100%; margin: 0; background: #f5f7fa; }
+  .page { min-height: 100vh; display: flex; flex-direction: column; }
+  header {
+    background: #1e1b4b;
+    color: #fff;
+    padding: 28px 24px 20px;
+    text-align: center;
+  }
+  header h1 { margin: 0 0 6px; font-size: 1.7rem; letter-spacing: -.5px; }
+  header p { margin: 0; color: #c7d2fe; font-size: .95rem; }
+  main { flex: 1; display: flex; align-items: flex-start; justify-content: center; padding: 40px 16px; }
+  .card {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 2px 20px rgba(0,0,0,.08);
+    padding: 32px 36px;
+    width: 100%;
+    max-width: 700px;
+  }
+  .card h2 { margin-top: 0; font-size: 1.15rem; color: #374151; }
+  .field { margin-bottom: 20px; }
+  label.block { display: block; font-weight: 600; margin-bottom: 8px; color: #374151; font-size: .9rem; }
+  input[type="file"] {
+    display: block;
+    width: 100%;
+    padding: 10px 12px;
+    border: 2px dashed #d1d5db;
+    border-radius: 8px;
+    background: #fafafa;
+    cursor: pointer;
+    font-size: .9rem;
+    color: #374151;
+  }
+  input[type="file"]:hover { border-color: #6366f1; background: #f0f0ff; }
+  .checkboxes { display: flex; flex-wrap: wrap; gap: 12px; }
+  .checkbox-item { display: flex; align-items: center; gap: 6px; }
+  .checkbox-item input { width: 16px; height: 16px; accent-color: #4f46e5; cursor: pointer; }
+  .checkbox-item label { font-size: .9rem; color: #374151; cursor: pointer; }
+  button[type="submit"] {
+    width: 100%;
+    padding: 13px;
+    background: #4f46e5;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background .15s;
+    margin-top: 8px;
+  }
+  button[type="submit"]:hover { background: #4338ca; }
+  .footer-note {
+    margin-top: 20px;
+    font-size: .82rem;
+    color: #6b7280;
+    border-top: 1px solid #f0f0f0;
+    padding-top: 16px;
+    line-height: 1.5;
+  }
+  .footer-note a { color: #4f46e5; }
+</style>
+</head>
+<body>
+<div class="page">
+  <header>
+    <h1>Document AI &mdash; Extraction Demo</h1>
+    <p>Extract barcode, name, user ID, and category from handwritten form images</p>
+  </header>
+  <main>
+    <div class="card">
+      <h2>Upload an image to run extraction</h2>
+      <form action="/demo/upload" method="POST" enctype="multipart/form-data">
+        <div class="field">
+          <label class="block" for="image">Image file</label>
+          <input type="file" id="image" name="image" accept="image/*" required>
+        </div>
+        <div class="field">
+          <label class="block">Models to run</label>
+          <div class="checkboxes">
+            <div class="checkbox-item">
+              <input type="checkbox" id="m-qwen2vl" name="models" value="qwen2vl" checked>
+              <label for="m-qwen2vl">Qwen2-VL-2B</label>
+            </div>
+            <div class="checkbox-item">
+              <input type="checkbox" id="m-donut" name="models" value="donut">
+              <label for="m-donut">Donut</label>
+            </div>
+            <div class="checkbox-item">
+              <input type="checkbox" id="m-paddle" name="models" value="paddle_trocr">
+              <label for="m-paddle">PaddleOCR + TrOCR</label>
+            </div>
+          </div>
+        </div>
+        <button type="submit">Run Extraction</button>
+      </form>
+      <div class="footer-note">
+        Low-confidence results are automatically queued for human review &rarr;
+        <a href="http://localhost:8001" target="_blank">HITL Queue</a>
+      </div>
+    </div>
+  </main>
+</div>
+</body>
+</html>

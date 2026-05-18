@@ -1,0 +1,19 @@
+/* Extra CSS overrides for HITL Review App.
+   Core styles live in base.html <style> block.
+   Add component-specific overrides here as the app grows. */
+
+/* Ensure images don't overflow on narrow viewports */
+img.case-image {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* Tighten monospace displays */
+code {
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+  font-size: 12px;
+  background: #f0f2f5;
+  padding: 1px 5px;
+  border-radius: 4px;
+}

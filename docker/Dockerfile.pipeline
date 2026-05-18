@@ -1,0 +1,55 @@
+# Stage 1: builder — install deps into .venv
+FROM python:3.11-slim AS builder
+
+# Install uv
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /usr/local/bin/
+
+WORKDIR /app
+
+# Copy lockfiles first for layer caching
+COPY pyproject.toml uv.lock ./
+
+# Sync only production deps (no dev group, no ml extras)
+RUN uv sync --frozen --no-dev
+
+# Stage 2: runtime — lean final image
+FROM python:3.11-slim AS runtime
+
+# System deps for pyzbar (barcode) and PIL (image processing)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libzbar0 \
+    libgl1 \
+    libglib2.0-0 \
+    && rm -rf /var/lib/apt/lists/*
+
+# Non-root user for security
+RUN useradd -m -u 1000 appuser
+
+# Copy virtual env from builder (no uv needed in runtime)
+COPY --from=builder /app/.venv /app/.venv
+
+ENV PATH="/app/.venv/bin:$PATH"
+ENV PYTHONPATH="/app/src"
+
+WORKDIR /app
+
+# Copy source (data/ is a runtime volume, not baked in)
+COPY src/ ./src/
+COPY templates/ ./templates/
+COPY static/ ./static/
+
+# Create runtime data dirs with correct ownership
+RUN mkdir -p /app/data/uploads && chown -R appuser:appuser /app/data
+
+USER appuser
+
+# Runtime config with sensible defaults
+ENV CASES_DB_PATH=/app/data/cases.db
+ENV CONFIDENCE_THRESHOLD=0.85
+
+EXPOSE 8000
+
+HEALTHCHECK --interval=30s --timeout=10s --start-period=15s --retries=3 \
+    CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"
+
+CMD ["uvicorn", "pipeline.api:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "1"]

@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Result — {{ model_name }}</title>
+<link rel="stylesheet" href="/static/style.css">
+<style>
+  html, body { margin: 0; background: #f5f7fa; }
+  header { background: #1e1b4b; color: #fff; padding: 20px 24px; }
+  header h1 { margin: 0; font-size: 1.4rem; }
+  header .sub { color: #c7d2fe; font-size: .88rem; margin-top: 4px; }
+  main { max-width: 700px; margin: 36px auto; padding: 0 16px; }
+  .badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 6px 14px; border-radius: 20px; font-weight: 600; font-size: .9rem;
+    margin-bottom: 24px;
+  }
+  .badge.easy { background: #d1fae5; color: #065f46; }
+  .badge.hard { background: #fee2e2; color: #991b1b; }
+  .person-card {
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 1px 10px rgba(0,0,0,.07);
+    padding: 22px 26px;
+    margin-bottom: 18px;
+  }
+  .person-card h3 { margin: 0 0 16px; font-size: 1rem; color: #6b7280; text-transform: uppercase; letter-spacing: .05em; }
+  .field-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+  .field-label { font-weight: 600; color: #374151; font-size: .9rem; min-width: 120px; }
+  .field-value { color: #111827; font-size: .9rem; flex: 1; text-align: right; padding-right: 12px; }
+  .conf-bar-wrap { width: 120px; }
+  .conf-bar-bg { background: #e5e7eb; border-radius: 4px; height: 8px; overflow: hidden; }
+  .conf-bar-fill { height: 8px; border-radius: 4px; }
+  .conf-label { font-size: .75rem; color: #6b7280; text-align: right; margin-top: 2px; }
+  .no-persons { color: #9ca3af; font-style: italic; margin-bottom: 18px; }
+  details { background: #fff; border-radius: 10px; box-shadow: 0 1px 10px rgba(0,0,0,.07); margin-bottom: 18px; }
+  summary { padding: 14px 20px; cursor: pointer; font-weight: 600; color: #374151; font-size: .9rem; }
+  pre { margin: 0; padding: 0 20px 16px; font-size: .8rem; color: #374151; overflow-x: auto; white-space: pre-wrap; word-break: break-all; }
+  .back-link { display: inline-block; color: #4f46e5; text-decoration: none; font-size: .9rem; margin-bottom: 32px; }
+  .back-link:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Extraction Result &mdash; {{ model_name }}</h1>
+  <div class="sub">Upload ID: {{ upload_id }}</div>
+</header>
+<main>
+  {% if routing == "easy" %}
+  <span class="badge easy">&#10003; EASY</span>
+  {% else %}
+  <span class="badge hard">&#9873; HARD &mdash; queued for review</span>
+  {% endif %}
+
+  {% set persons = result.get("persons", []) %}
+  {% if persons %}
+    {% for person in persons %}
+    <div class="person-card">
+      <h3>Person {{ loop.index }}</h3>
+      {% set fields = [
+        ("Barcode", person.get("barcode_number", "")),
+        ("Name", person.get("name", "")),
+        ("User ID", person.get("user_id", "")),
+        ("Category", person.get("category", "")),
+      ] %}
+      {% for label, val in fields %}
+      <div class="field-row">
+        <span class="field-label">{{ label }}</span>
+        <span class="field-value">{{ val or "—" }}</span>
+      </div>
+      {% endfor %}
+      <div class="field-row" style="margin-top:14px;">
+        <span class="field-label">Confidence</span>
+        <div class="conf-bar-wrap">
+          {% set pct = (person.get("confidence", 0) * 100) | int %}
+          {% if pct >= 85 %}{% set bar_color = "#10b981" %}
+          {% elif pct >= 60 %}{% set bar_color = "#f59e0b" %}
+          {% else %}{% set bar_color = "#ef4444" %}{% endif %}
+          <div class="conf-bar-bg">
+            <div class="conf-bar-fill" style="width:{{ pct }}%; background:{{ bar_color }};"></div>
+          </div>
+          <div class="conf-label">{{ "%.1f"|format(person.get("confidence", 0) * 100) }}%</div>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  {% else %}
+    <p class="no-persons">No persons extracted from this image.</p>
+  {% endif %}
+
+  <details>
+    <summary>Raw JSON</summary>
+    <pre>{{ result | tojson(indent=2) }}</pre>
+  </details>
+
+  <a class="back-link" href="/demo">&larr; Run another</a>
+</main>
+</body>
+</html>
