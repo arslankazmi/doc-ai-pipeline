@@ -2,6 +2,8 @@
 
 > End-to-end extraction pipeline for handwritten form images containing barcodes, Korean/Latin names, user IDs, and category indicators.
 
+**[Project Overview & Architecture →](https://arslankazmi.github.io/doc-ai-pipeline/)**
+
 ## Features
 - Three swappable extraction backends: Qwen2-VL-2B, Donut, PaddleOCR + TrOCR
 - Confidence-based routing — low-confidence images queued for human review
